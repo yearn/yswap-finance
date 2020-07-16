@@ -10,21 +10,27 @@ import IpfsRouter from 'ipfs-react-router'
 import './i18n';
 import interestTheme from './theme';
 
-import APR from './components/apr';
-import InvestSimple from './components/investSimple';
-import Manage from './components/manage';
-import Performance from './components/performance';
-import Zap from './components/zap';
-import IDai from './components/idai';
-import Insure from './components/insure';
+import Account from './components/account';
 import Footer from './components/footer';
 import Home from './components/home';
 import Pool from './components/pool';
-import Balancer from './components/balancer';
 import Header from './components/header';
+
+import {
+  CONNECTION_CONNECTED,
+  CONNECTION_DISCONNECTED,
+  CONFIGURE,
+  CONFIGURE_RETURNED,
+} from './constants'
+
+import Store from "./stores";
+const emitter = Store.emitter
+const dispatcher = Store.dispatcher
+const store = Store.store
 
 class App extends Component {
   state = {
+    account: null,
     headerValue: null
   };
 
@@ -32,60 +38,77 @@ class App extends Component {
     this.setState({ headerValue: newValue })
   };
 
+  componentWillMount() {
+    emitter.on(CONNECTION_CONNECTED, this.connectionConnected);
+    emitter.on(CONNECTION_DISCONNECTED, this.connectionDisconnected);
+    emitter.on(CONFIGURE_RETURNED, this.configureReturned);
+  }
+
+  componentWillUnmount() {
+    emitter.removeListener(CONNECTION_CONNECTED, this.connectionConnected);
+    emitter.removeListener(CONNECTION_DISCONNECTED, this.connectionDisconnected);
+    emitter.removeListener(CONFIGURE_RETURNED, this.configureReturned);
+  };
+
+  configureReturned = () => {
+    console.log('Configure Returned')
+  }
+
+  connectionConnected = () => {
+    console.log('setting account')
+    console.log(store.getStore('account'))
+    this.setState({ account: store.getStore('account') })
+    console.log('configuring')
+    dispatcher.dispatch({ type: CONFIGURE, content: {} })
+  };
+
+  connectionDisconnected = () => {
+    this.setState({ account: store.getStore('account') })
+  }
+
   render() {
 
-    const { headerValue } = this.state
+    const { headerValue, account } = this.state
 
     return (
       <MuiThemeProvider theme={ createMuiTheme(interestTheme) }>
         <CssBaseline />
         <IpfsRouter>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: '100vh',
-            alignItems: 'center',
-            background: "#f9fafb"
-          }}>
-            <Switch>
-              <Route path="/apr">
-                <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
-                <APR />
-              </Route>
-              <Route path="/earn">
-                <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
-                <InvestSimple />
-              </Route>
-              <Route path="/zap">
-                <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
-                <Zap />
-              </Route>
-              <Route path="/idai">
-                <IDai />
-              </Route>
-              <Route path="/performance">
-                <Performance />
-              </Route>
-              <Route path="/manage">
-                <Manage />
-              </Route>
-              <Route path="/cover">
-                <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
-                <Insure />
-              </Route>
-              <Route path="/pool">
-                <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
-                <Pool />
-              </Route>
-              <Route path="/balancer">
-                <Balancer />
-              </Route>
-              <Route path="/">
-                <Home />
-              </Route>
-            </Switch>
-            <Footer />
-          </div>
+          { !account &&
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
+              minWidth: '100vw',
+              justifyContent: 'center',
+              alignItems: 'center',
+              background: "#f9fafb"
+            }}>
+              <Account />
+            </div>
+          }
+          { account &&
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
+              justifyContent: 'center',
+              alignItems: 'center',
+              background: "#f9fafb"
+            }}>
+              <Switch>
+                <Route path="/pool">
+                  <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
+                  <Pool />
+                </Route>
+                <Route path="/">
+                  <Header setHeaderValue={ this.setHeaderValue } headerValue={ headerValue } />
+                  <Pool />
+                </Route>
+              </Switch>
+              <Footer />
+            </div>
+          }
         </IpfsRouter>
       </MuiThemeProvider>
     );

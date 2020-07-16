@@ -157,6 +157,9 @@ const iswapTheme =  {
       }
     },
     MuiOutlinedInput: {
+      adornedEnd: {
+
+      },
       input: {
         "&::placeholder": {
           color: colors.text
@@ -210,6 +213,16 @@ const iswapTheme =  {
         '&:before': { //underline color when textfield is inactive
           backgroundColor: 'none',
           height: '0px'
+        },
+      }
+    },
+    MuiInput: {
+      underline: {
+        '&:before': { //underline color when textfield is inactive
+          borderBottom: 'none !important'
+        },
+        '&:after': { //underline color when textfield is inactive
+          borderBottom: 'none !important'
         },
       }
     },

@@ -18,9 +18,8 @@ import Store from "../../stores";
 
 import {
   ERROR,
-  CONNECTION_CONNECTED,
-  CONNECTION_DISCONNECTED,
-  GET_POOL_BALANCES
+  GET_POOL_BALANCES,
+  CONFIGURE_RETURNED
 } from '../../constants'
 
 const styles = theme => ({
@@ -141,34 +140,27 @@ class Pool extends Component {
     super()
 
     const account = store.getStore('account')
+    const assets = store.getStore('assets')
 
     this.state = {
-      value: 1,
-      loading: false,
+      value: 0,
+      loading: !(account && assets),
       account: account
     }
 
   }
 
   componentWillMount() {
-    emitter.on(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.on(CONNECTION_DISCONNECTED, this.connectionDisconnected);
+    emitter.on(CONFIGURE_RETURNED, this.configureReturned)
   }
 
   componentWillUnmount() {
-    emitter.removeListener(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.removeListener(CONNECTION_DISCONNECTED, this.connectionDisconnected);
+    emitter.removeListener(CONFIGURE_RETURNED, this.configureReturned)
   };
 
-  connectionConnected = () => {
-
-    this.setState({ account: store.getStore('account') })
-
+  configureReturned = () => {
+    this.setState({ loading: false })
     dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-  }
-
-  connectionDisconnected = () => {
-    this.setState({ account: store.getStore('account') })
   }
 
   render() {

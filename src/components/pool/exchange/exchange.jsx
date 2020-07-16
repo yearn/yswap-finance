@@ -7,9 +7,8 @@ import {
   Button,
   InputAdornment,
   TextField,
-  RadioGroup,
-  FormControlLabel,
-  Radio
+  MenuItem,
+  CircularProgress
 } from '@material-ui/core';
 
 import Loader from '../../loader'
@@ -51,9 +50,8 @@ const styles = theme => ({
     width: '100%',
     position: 'relative',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    maxWidth: '800px'
   },
   introCenter: {
     minWidth: '100%',
@@ -66,6 +64,7 @@ const styles = theme => ({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: '12px',
     minWidth: '100%',
     [theme.breakpoints.up('md')]: {
       minWidth: '800px',
@@ -104,6 +103,28 @@ const styles = theme => ({
     borderRadius: '0.75rem',
     marginBottom: '24px',
   },
+  aUSDCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    flex: 1,
+    whiteSpace: 'nowrap',
+    fontSize: '0.83rem',
+    padding: '28px 30px',
+    borderRadius: '50px',
+    border: '1px solid '+colors.borderBlue,
+    alignItems: 'center',
+    maxWidth: '500px',
+    marginTop: '40px',
+    background: colors.white,
+    [theme.breakpoints.up('md')]: {
+      width: '100%'
+    }
+  },
+  aUSDBalance: {
+    display: 'flex',
+    alignItems: 'center'
+  },
   addressContainer: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -117,6 +138,7 @@ const styles = theme => ({
     borderRadius: '50px',
     border: '1px solid '+colors.borderBlue,
     alignItems: 'center',
+    maxWidth: '500px',
     [theme.breakpoints.up('md')]: {
       width: '100%'
     }
@@ -136,9 +158,12 @@ const styles = theme => ({
     flexWrap: 'wrap',
     padding: '42px 30px',
     borderRadius: '50px',
+    flexDirection: 'column',
     justifyContent: 'flex-start',
-    marginTop: '40px',
+    alignItems: 'center',
+    margin: '40px 0px',
     border: '1px solid '+colors.borderBlue,
+    minWidth: '500px',
   },
   actionInput: {
     padding: '0px 0px 12px 0px',
@@ -171,27 +196,30 @@ const styles = theme => ({
     cursor: 'pointer'
   },
   valContainer: {
-    flex: 1,
     display: 'flex',
     flexDirection: 'column',
+    width: '100%'
   },
   inputCardHeading: {
     width: '100%',
-    padding: '12px 0px 12px 20px',
     color: colors.darkGray
   },
-  radioGroup: {
-    padding: '12px 0px 24px 20px'
+  inputCardHeading2: {
+    width: '100%',
+    color: colors.darkGray,
+    marginTop: '20px'
   },
-  sepperator: {
-    borderRight: '1px solid #DEDEDE',
-    margin: '12px 24px 24px 24px'
+  placceholder: {
+    marginBottom: '12px'
   },
-  sendContainer: {
-    flex: 1,
+  ratios: {
+    marginBottom: '12px'
   },
-  receiveContainer:  {
-    flex: 1,
+  idealHolder: {
+    display: 'flex'
+  },
+  disabledAdornment: {
+    color: 'rgb(170, 170, 170)'
   },
   walletAddress: {
     padding: '0px 12px'
@@ -200,6 +228,39 @@ const styles = theme => ({
     flex: 1,
     color: colors.darkGray
   },
+  assetSelectMenu: {
+    padding: '15px 15px 15px 20px',
+    minWidth: '200px',
+    display: 'flex'
+  },
+  assetSelectIcon: {
+    display: 'inline-block',
+    verticalAlign: 'middle',
+    borderRadius: '25px',
+    background: '#dedede',
+    height: '30px',
+    width: '30px',
+    textAlign: 'center',
+    cursor: 'pointer'
+  },
+  assetSelectIconName: {
+    paddingLeft: '10px',
+    display: 'inline-block',
+    verticalAlign: 'middle',
+    flex: 1
+  },
+  assetSelectBalance: {
+
+  },
+  assetContainer: {
+    minWidth: '120px'
+  },
+  priceContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '20px 20px 28px 0px'
+  }
 });
 
 class Exchange extends Component {
@@ -210,10 +271,13 @@ class Exchange extends Component {
     const account = store.getStore('account')
 
     this.state = {
+      priceLoading: false,
       account: account,
-      assets: store.getStore('poolAssets'),
-      sendAsset: 'DAI',
-      receiveAsset: 'USDC'
+      assets: store.getStore('assets'),
+      fromAsset: "",
+      toAsset: "",
+      fromAmount: "",
+      toAmount: ""
     }
 
     if(account && account.address) {
@@ -225,8 +289,6 @@ class Exchange extends Component {
     emitter.on(ERROR, this.errorReturned);
     emitter.on(POOL_BALANCES_RETURNED, this.balancesReturned);
     emitter.on(EXCHANGE_PRICE_RETURNED, this.exchangePriceReturned);
-    emitter.on(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.on(CONNECTION_DISCONNECTED, this.connectionDisconnected);
     emitter.on(EXCHANGE_POOL_RETURNED, this.exchangePoolReturned);
   }
 
@@ -234,8 +296,6 @@ class Exchange extends Component {
     emitter.removeListener(ERROR, this.errorReturned);
     emitter.removeListener(POOL_BALANCES_RETURNED, this.balancesReturned);
     emitter.removeListener(EXCHANGE_PRICE_RETURNED, this.exchangePriceReturned);
-    emitter.removeListener(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.removeListener(CONNECTION_DISCONNECTED, this.connectionDisconnected);
     emitter.removeListener(EXCHANGE_POOL_RETURNED, this.exchangePoolReturned);
   };
 
@@ -249,35 +309,22 @@ class Exchange extends Component {
   };
 
   exchangePriceReturned = (price) => {
-    console.log(price)
-    this.setState({ receiveAmount: price ? parseFloat(price).toFixed(4) : '0.0000' })
+    const { fromAmount } = this.state
+
+    let pricePerShare = price
+    let toAmount = ''
+
+    if(fromAmount && fromAmount != "" && !isNaN(fromAmount) && parseFloat(fromAmount) > 0) {
+      pricePerShare = pricePerShare / fromAmount
+      toAmount= price
+    }
+
+    this.setState({ priceConversion: pricePerShare ? parseFloat(pricePerShare).toFixed(4) : '0.0000', priceLoading: false, toAmount: toAmount })
   };
 
   balancesReturned = (balances) => {
-    this.setState({ assets: store.getStore('poolAssets') })
+    this.setState({ assets: store.getStore('assets') })
   };
-
-  refresh() {
-    dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-  }
-
-  connectionConnected = () => {
-    const { t } = this.props
-
-    this.setState({ account: store.getStore('account') })
-
-    dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-
-    const that = this
-    setTimeout(() => {
-      const snackbarObj = { snackbarMessage: t("Unlock.WalletConnected"), snackbarType: 'Info' }
-      that.setState(snackbarObj)
-    })
-  };
-
-  connectionDisconnected = () => {
-    this.setState({ account: store.getStore('account') })
-  }
 
   errorReturned = (error) => {
     const snackbarObj = { snackbarMessage: null, snackbarType: null }
@@ -296,10 +343,10 @@ class Exchange extends Component {
       account,
       loading,
       snackbarMessage,
-      sendAmount,
-      sendAsset,
-      receiveAmount,
-      receiveAsset,
+      priceConversion,
+      fromAsset,
+      toAsset,
+      priceLoading
     } = this.state
 
     var address = null;
@@ -307,13 +354,11 @@ class Exchange extends Component {
       address = account.address.substring(0,6)+'...'+account.address.substring(account.address.length-4,account.address.length)
     }
 
-
     return (
       <div className={ classes.root }>
         <div className={ classes.card }>
           <Typography variant={'h5'} className={ classes.disaclaimer }>This project is in beta. Use at your own risk.</Typography>
           <div className={ classes.intro }>
-            <Typography variant='h3' className={ classes.introText }>{ t('PoolExchange.Intro') }</Typography>
             <Card className={ classes.addressContainer } onClick={this.overlayClicked}>
               <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>Wallet</Typography>
               <Typography variant={ 'h4'} className={ classes.walletAddress } noWrap>{ address }</Typography>
@@ -321,31 +366,16 @@ class Exchange extends Component {
             </Card>
           </div>
           <Card className={ classes.inputContainer }>
-            <div className={ classes.sendContainer }>
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolExchange.From") }</Typography>
-              { this.renderAmountInput('sendAmount', sendAmount, false, 'DAI', '0.00') }
-              <RadioGroup className={ classes.radioGroup } name="sendAsset" value={sendAsset} onChange={ this.handleChange }>
-                <FormControlLabel value="DAI" control={<Radio />} label="DAI" />
-                <FormControlLabel value="USDC" control={<Radio />} label="USDC" />
-                <FormControlLabel value="USDT" control={<Radio />} label="USDT" />
-                <FormControlLabel value="TUSD" control={<Radio />} label="TUSD" />
-                <FormControlLabel value="SUSD" control={<Radio />} label="sUSD" />
-              </RadioGroup>
+            <Typography variant='h3' className={ classes.inputCardHeading }>From</Typography>
+            { this.renderAssetInput('from') }
+            <Typography variant='h3' className={ classes.inputCardHeading2 }>To (Estimated)</Typography>
+            { this.renderAssetInput('to') }
+            <div className={ classes.priceContainer }>
+              <Typography variant='h4' className={ classes.priceConversion }>Price </Typography>
+              { priceLoading && <CircularProgress size={ 20 } /> }
+              { !priceLoading && <Typography variant='h4' className={ classes.priceConversion }>{ priceConversion ? (priceConversion + ' ' + toAsset + ' per 1 ' + fromAsset) : '-' }</Typography>}
             </div>
-            <div className={ classes.sepperator }>
 
-            </div>
-              <div className={ classes.receiveContainer }>
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolExchange.To") }</Typography>
-              { this.renderAmountInput('daiAmount', receiveAmount, false, 'DAI', '0.00', true) }
-              <RadioGroup className={ classes.radioGroup } name="receiveAsset" value={receiveAsset} onChange={ this.handleChange }>
-                <FormControlLabel value="DAI" control={<Radio />} label="DAI" />
-                <FormControlLabel value="USDC" control={<Radio />} label="USDC" />
-                <FormControlLabel value="USDT" control={<Radio />} label="USDT" />
-                <FormControlLabel value="TUSD" control={<Radio />} label="TUSD" />
-                <FormControlLabel value="SUSD" control={<Radio />} label="sUSD" />
-              </RadioGroup>
-            </div>
             <Button
               className={ classes.actionButton }
               variant="outlined"
@@ -365,15 +395,28 @@ class Exchange extends Component {
   };
 
   onExchange = () => {
-    const { sendAsset, receiveAsset, sendAmount } = this.state
+    const { fromAsset, toAsset, fromAmount, toAmount, assets } = this.state
 
-    if(!sendAmount || isNaN(sendAmount) || sendAmount <= 0) {
-      this.setState({ amountError: true })
+    if(!fromAmount || isNaN(fromAmount) || fromAmount <= 0) {
+      this.setState({ fromAmountError: true })
       return false
     }
+    let from = null
+    let to = null
 
-    this.setState({ loading: true })
-    dispatcher.dispatch({ type: EXCHANGE_POOL, content: { sendAsset, receiveAsset, sendAmount } })
+    assets.map((asset) => {
+      if(asset.id === fromAsset) {
+        from = asset.address
+      }
+      if(asset.id === toAsset) {
+        to = asset.address
+      }
+    })
+
+    if(from && to) {
+      this.setState({ loading: true })
+      dispatcher.dispatch({ type: EXCHANGE_POOL, content: { fromAsset: from, toAsset: to, fromAmount, toAmount } })
+    }
   }
 
   renderSnackbar = () => {
@@ -384,63 +427,182 @@ class Exchange extends Component {
     return <Snackbar type={ snackbarType } message={ snackbarMessage } open={true}/>
   };
 
-  onChange = (event) => {
+  setAmount = (id, type, balance) => {
+    const bal = (Math.floor((balance === '' ? '0' : balance)*10000)/10000).toFixed(4)
+    let val = []
+    val[type+"Amount"] = bal
+    this.setState(val)
+  }
 
-    if(event.target.value !== '') {
-      if(!event.target.value || isNaN(event.target.value) || event.target.value < 0) {
-        this.setState({ amountError: true })
-        return false
-      }
+  renderAssetInput = (type) => {
+    const {
+      classes
+    } = this.props
+
+    const {
+      loading,
+      assets
+    } = this.state
+
+    const that = this
+
+    let asset = assets.filter((asset) => { return asset.id === that.state[type+"Asset"] })
+    if(asset.length > 0) {
+      asset = asset[0]
+    } else {
+      asset = null
     }
 
-    let val = []
-    val[event.target.name] = event.target.value
-    this.setState(val)
-
-    dispatcher.dispatch({ type: GET_EXCHANGE_PRICE, content: { sendAsset: this.state.sendAsset, receiveAsset: this.state.receiveAsset, sendAmount: event.target.value !== '' ? event.target.value : '0' }})
-  };
-
-  renderAmountInput = (id, value, error, label, placeholder, disabled) => {
-    const { classes, loading } = this.props
-    const { assets } =  this.state
+    const amount = this.state[type+"Amount"]
+    const amountError = this.state[type+'AmountError']
 
     return (
-      <TextField
-        fullWidth
-        className={ classes.actionInput }
-        id={ id }
-        name={ id }
-        value={ value }
-        error={ error }
-        onChange={ this.onChange }
-        disabled={ loading || disabled }
-        placeholder={ placeholder }
-        variant="outlined"
-      />
+      <div className={ classes.valContainer }>
+        <div className={ classes.balances }>
+          { (asset ? (<Typography variant='h4' onClick={ () => { this.setAmount(asset.id, type, (asset ? asset.balance : 0)) } } className={ classes.value } noWrap>{ 'Balance: '+ ( asset && asset.balance ? (Math.floor(asset.balance*10000)/10000).toFixed(4) : '0.0000') } { asset ? asset.symbol : '' }</Typography>) : <Typography variant='h4' className={ classes.value } noWrap>Balance: -</Typography>) }
+        </div>
+        <div>
+          <TextField
+            fullWidth
+            disabled={ loading || type === "to" }
+            className={ classes.actionInput }
+            id={ type+"Amount" }
+            value={ amount }
+            error={ amountError }
+            onChange={ this.onChange }
+            placeholder="0.00"
+            variant="outlined"
+            InputProps={{
+              endAdornment: <div className={ classes.assetContainer }>{ this.renderAssetSelect(type+"Asset") }</div>,
+            }}
+          />
+        </div>
+      </div>
     )
   }
 
-  setAmount(id, balance) {
-    let val = []
-    val[id] = balance.toFixed(4)
-    this.setState(val)
+  renderAssetSelect = (id) => {
+    const { loading, assets } = this.state
+    const { classes } = this.props
+
+    return (
+      <TextField
+        id={ id }
+        name={ id }
+        select
+        value={ this.state[id] }
+        onChange={ this.onSelectChange }
+        SelectProps={{
+          native: false,
+        }}
+        fullWidth
+        disabled={ loading }
+        placeholder={ 'Select' }
+        className={ classes.assetSelectRoot }
+      >
+        { assets ? assets.map(this.renderAssetOption) : null }
+      </TextField>
+    )
   }
 
-  handleChange = (event) => {
+  renderAssetOption = (option) => {
+    const { classes } = this.props
+
+    return (
+      <MenuItem key={option.id} value={option.symbol} className={ classes.assetSelectMenu }>
+        <React.Fragment>
+          <div className={ classes.assetSelectIcon }>
+            <img
+              alt=""
+              src={ require('../../../assets/'+option.id+'-logo.png') }
+              height="30px"
+            />
+          </div>
+          <div className={ classes.assetSelectIconName }>
+            <Typography variant='h4'>{ option.symbol }</Typography>
+          </div>
+        </React.Fragment>
+      </MenuItem>
+    )
+  }
+
+  onChange = (event) => {
+    let val = []
+    val[event.target.id] = event.target.value
+    this.setState(val)
+
+    let {
+      fromAsset,
+      toAsset,
+      fromAmount,
+      assets
+    } = this.state
+
+    if(fromAsset && fromAsset != "" && toAsset && toAsset != "") {
+
+      fromAmount = event.target.id === 'fromAmount' ? event.target.value : fromAmount
+
+      let from = ""
+      let to = ""
+      let amount = "1"
+
+      assets.map((asset) => {
+        if(asset.id === fromAsset) {
+          from = asset.address
+        }
+        if(asset.id === toAsset) {
+          to = asset.address
+        }
+      })
+
+      if(fromAmount && fromAmount != "" && !isNaN(fromAmount) && parseFloat(fromAmount) > 0) {
+        amount = fromAmount
+      }
+
+      this.setState({ priceLoading: true })
+
+      dispatcher.dispatch({ type: GET_EXCHANGE_PRICE, content: { fromAsset: from, toAsset: to, amount: amount } })
+    }
+  }
+
+  onSelectChange = (event) => {
     let val = []
     val[event.target.name] = event.target.value
     this.setState(val)
 
-    let sendAsset = this.state.sendAsset
-    let receiveAsset = this.state.receiveAsset
+    let {
+      fromAsset,
+      toAsset,
+      fromAmount,
+      assets
+    } = this.state
 
-    if(event.target.name === 'sendAsset') {
-      sendAsset = event.target.value
-    } else if (event.target.name === 'receiveAsset') {
-      receiveAsset = event.target.value
+    fromAsset = event.target.name === 'fromAsset' ? event.target.value : fromAsset
+    toAsset = event.target.name === 'toAsset' ? event.target.value : toAsset
+
+    if(fromAsset && fromAsset != "" && toAsset && toAsset != "") {
+
+      let from = ""
+      let to = ""
+      let amount = "1"
+
+      assets.map((asset) => {
+        if(asset.id === fromAsset) {
+          from = asset.address
+        }
+        if(asset.id === toAsset) {
+          to = asset.address
+        }
+      })
+
+      if(fromAmount && fromAmount != "" && !isNaN(fromAmount) && parseFloat(fromAmount) > 0) {
+        amount = fromAmount
+      }
+
+      this.setState({ priceLoading: true })
+
+      dispatcher.dispatch({ type: GET_EXCHANGE_PRICE, content: { fromAsset: from, toAsset: to, amount: amount } })
     }
-
-    dispatcher.dispatch({ type: GET_EXCHANGE_PRICE, content: { sendAsset: sendAsset, receiveAsset: receiveAsset, sendAmount: this.state.sendAmount ? this.state.sendAmount : '0' }})
   }
 
 }

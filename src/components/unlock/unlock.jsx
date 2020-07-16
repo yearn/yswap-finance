@@ -105,20 +105,6 @@ class Unlock extends Component {
     emitter.removeListener(ERROR, this.error);
   };
 
-  navigateInvest = () => {
-    this.props.history.push('/invest')
-  }
-
-  // unlockMetamask = () => {
-  //   this.setState({ metamaskLoading: true })
-  //   dispatcher.dispatch({ type: CONNECT_METAMASK, content: {} })
-  // }
-  //
-  // unlockLedger = () => {
-  //   this.setState({ ledgerLoading: true })
-  //   dispatcher.dispatch({ type: CONNECT_LEDGER, content: {} })
-  // }
-
   error = (err) => {
     this.setState({ loading: false, error: err, metamaskLoading: false, ledgerLoading: false })
   };

@@ -24,8 +24,6 @@ import {
   WITHDRAW_POOL_RETURNED,
   GET_WITHDRAW_PRICE,
   WITHDRAW_PRICE_RETURNED,
-  GET_SPOOL_BALANCE,
-  SPOOL_BALANCE_RETURNED
 } from '../../../constants'
 
 import { withNamespaces } from 'react-i18next';
@@ -39,9 +37,9 @@ const styles = theme => ({
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    maxWidth: '800px',
+    maxWidth: '1200px',
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center'
   },
   introText: {
@@ -51,9 +49,8 @@ const styles = theme => ({
     width: '100%',
     position: 'relative',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    maxWidth: '800px'
   },
   introCenter: {
     minWidth: '100%',
@@ -118,6 +115,7 @@ const styles = theme => ({
     borderRadius: '50px',
     border: '1px solid '+colors.borderBlue,
     alignItems: 'center',
+    maxWidth: '500px',
     [theme.breakpoints.up('md')]: {
       width: '100%'
     }
@@ -126,9 +124,10 @@ const styles = theme => ({
     width: '100%',
     display: 'flex',
     flexWrap: 'wrap',
+    maxWidth: '800px',
     justifyContent: 'center',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   inputContainer: {
     flex: 1,
@@ -136,10 +135,12 @@ const styles = theme => ({
     flexWrap: 'wrap',
     padding: '42px 30px',
     borderRadius: '50px',
-    justifyContent: 'center',
-    marginTop: '40px',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    margin: '40px 0px',
     border: '1px solid '+colors.borderBlue,
-    maxWidth: '460px'
+    minWidth: '500px',
   },
   actionInput: {
     padding: '0px 0px 12px 0px',
@@ -172,18 +173,25 @@ const styles = theme => ({
     cursor: 'pointer'
   },
   valContainer: {
-    flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    minWidth: '100%'
+    width: '100%'
   },
   inputCardHeading: {
     width: '100%',
-    padding: '12px 0px 12px 20px',
     color: colors.darkGray
   },
   placceholder: {
     marginBottom: '12px'
+  },
+  ratios: {
+    marginBottom: '12px'
+  },
+  idealHolder: {
+    display: 'flex'
+  },
+  disabledAdornment: {
+    color: 'rgb(170, 170, 170)'
   },
   walletAddress: {
     padding: '0px 12px'
@@ -191,6 +199,28 @@ const styles = theme => ({
   walletTitle: {
     flex: 1,
     color: colors.darkGray
+  },
+  aUSDCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    flex: 1,
+    whiteSpace: 'nowrap',
+    fontSize: '0.83rem',
+    padding: '28px 30px',
+    borderRadius: '50px',
+    border: '1px solid '+colors.borderBlue,
+    alignItems: 'center',
+    maxWidth: '500px',
+    marginTop: '40px',
+    background: colors.white,
+    [theme.breakpoints.up('md')]: {
+      width: '100%'
+    }
+  },
+  aUSDBalance: {
+    display: 'flex',
+    alignItems: 'center'
   },
 });
 
@@ -200,41 +230,26 @@ class Withdraw extends Component {
     super()
 
     const account = store.getStore('account')
+    const assets = store.getStore('assets')
 
     this.state = {
+      loading: !assets,
       account: account,
-      assets: store.getStore('poolAssets'),
-      sCrvBalance: 0
-    }
-
-    if(account && account.address) {
-      dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-      dispatcher.dispatch({ type: GET_SPOOL_BALANCE, content: {} })
+      assets: assets.filter((asset) => { return asset.uniBalance > 0 }),
+      aUSD: store.getStore('aUSD'),
     }
   }
 
   componentWillMount() {
     emitter.on(ERROR, this.errorReturned);
     emitter.on(POOL_BALANCES_RETURNED, this.balancesReturned);
-    emitter.on(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.on(CONNECTION_DISCONNECTED, this.connectionDisconnected);
     emitter.on(WITHDRAW_POOL_RETURNED, this.withdrawPoolReturned);
-    emitter.on(WITHDRAW_PRICE_RETURNED, this.withdrawPriceReturned);
-    emitter.on(SPOOL_BALANCE_RETURNED, this.spoolBalanceReturned);
   }
 
   componentWillUnmount() {
     emitter.removeListener(ERROR, this.errorReturned);
     emitter.removeListener(POOL_BALANCES_RETURNED, this.balancesReturned);
-    emitter.removeListener(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.removeListener(CONNECTION_DISCONNECTED, this.connectionDisconnected);
     emitter.removeListener(WITHDRAW_POOL_RETURNED, this.withdrawPoolReturned);
-    emitter.removeListener(WITHDRAW_PRICE_RETURNED, this.withdrawPriceReturned);
-    emitter.removeListener(SPOOL_BALANCE_RETURNED, this.spoolBalanceReturned);
-  };
-
-  withdrawPriceReturned = (prices) => {
-    this.setState({ daiAmount: prices[0].toFixed(4), usdcAmount: prices[1].toFixed(4), usdtAmount: prices[2].toFixed(4), tusdAmount: prices[3].toFixed(4), susdAmount: prices[4].toFixed(4) })
   };
 
   withdrawPoolReturned  = (txHash) => {
@@ -246,37 +261,13 @@ class Withdraw extends Component {
     })
   };
 
-  spoolBalanceReturned = (balances) => {
-    this.setState({ sCrvBalance: store.getStore('sCrvBalance') })
-  };
-
   balancesReturned = (balances) => {
-    this.setState({ assets: store.getStore('poolAssets') })
-  };
-
-  refresh() {
-    dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-    dispatcher.dispatch({ type: GET_SPOOL_BALANCE, content: {} })
-  }
-
-  connectionConnected = () => {
-    const { t } = this.props
-
-    this.setState({ account: store.getStore('account') })
-
-    dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-    dispatcher.dispatch({ type: GET_SPOOL_BALANCE, content: {} })
-
-    const that = this
-    setTimeout(() => {
-      const snackbarObj = { snackbarMessage: t("Unlock.WalletConnected"), snackbarType: 'Info' }
-      that.setState(snackbarObj)
+    this.setState({
+      assets: store.getStore('assets').filter((asset) => { return asset.uniBalance > 0 }),
+      aUSD: store.getStore('aUSD'),
+      loading: false
     })
   };
-
-  connectionDisconnected = () => {
-    this.setState({ account: store.getStore('account') })
-  }
 
   errorReturned = (error) => {
     const snackbarObj = { snackbarMessage: null, snackbarType: null }
@@ -296,13 +287,9 @@ class Withdraw extends Component {
       loading,
       modalOpen,
       snackbarMessage,
-      daiAmount,
-      usdcAmount,
-      usdtAmount,
-      tusdAmount,
-      susdAmount,
       amount,
-      sCrvBalance
+      assets,
+      aUSD,
     } = this.state
 
     var address = null;
@@ -312,58 +299,51 @@ class Withdraw extends Component {
 
     return (
       <div className={ classes.root }>
-        { !account.address &&
-          <div className={ classes.investedContainer }>
-            <Typography variant={'h5'} className={ classes.disaclaimer }>This project is in beta. Use at your own risk.</Typography>
-            <div className={ classes.introCenter }>
-              <Typography variant='h3'>{ t('PoolWithdraw.Intro') }</Typography>
-            </div>
-            <div className={ classes.connectContainer }>
-              <Button
-                className={ classes.actionButton }
-                variant="outlined"
-                color="primary"
-                disabled={ loading }
-                onClick={ this.overlayClicked }
-                >
-                <Typography className={ classes.buttonText } variant={ 'h5'}>{ t('PoolWithdraw.Connect') }</Typography>
-              </Button>
-            </div>
-          </div>
-        }
-        { account.address &&
-          <div className={ classes.card }>
-            <Typography variant={'h5'} className={ classes.disaclaimer }>This project is in beta. Use at your own risk.</Typography>
-            <div className={ classes.intro }>
-              <Typography variant='h3' className={ classes.introText }>{ t('PoolWithdraw.Intro') }</Typography>
-              <Card className={ classes.addressContainer } onClick={this.overlayClicked}>
-                <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>Wallet</Typography>
-                <Typography variant={ 'h4'} className={ classes.walletAddress } noWrap>{ address }</Typography>
-                <div style={{ background: '#DC6BE5', opacity: '1', borderRadius: '10px', width: '10px', height: '10px', marginRight: '3px', marginTop:'3px', marginLeft:'6px' }}></div>
-              </Card>
-            </div>
-            <Card className={ classes.inputContainer }>
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolWithdraw.Withdraw") }</Typography>
-              { this.renderAmountInput('amount', amount, false, 'CRV', '0.00', 'CRV', false, false, sCrvBalance) }
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolWithdraw.IWillReceive") }</Typography>
-              { this.renderAmountInput('daiAmount', daiAmount, false, 'DAI', '0.00', 'DAI', true, true) }
-              { this.renderAmountInput('usdcAmount', usdcAmount, false, 'USDC', '0.00', 'USDC', true, true) }
-              { this.renderAmountInput('usdtAmount', usdtAmount, false, 'USDT', '0.00', 'USDT', true, true) }
-              { this.renderAmountInput('tusdAmount', tusdAmount, false, 'TUSD', '0.00', 'TUSD', true, true) }
-              { this.renderAmountInput('susdAmount', susdAmount, false, 'SUSD', '0.00', 'SUSD', true, true) }
-              <Button
-                className={ classes.actionButton }
-                variant="outlined"
-                color="primary"
-                disabled={ loading }
-                onClick={ this.onWithdraw }
-                fullWidth
-                >
-                <Typography className={ classes.buttonText } variant={ 'h5'} color='secondary'>{ t('PoolWithdraw.Withdraw') }</Typography>
-              </Button>
+        <div className={ classes.card }>
+          <Typography variant={'h5'} className={ classes.disaclaimer }>This project is in beta. Use at your own risk.</Typography>
+          <div className={ classes.intro }>
+            <Card className={ classes.addressContainer } onClick={this.overlayClicked}>
+              <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>Wallet</Typography>
+              <Typography variant={ 'h4'} className={ classes.walletAddress } noWrap>{ address }</Typography>
+              <div style={{ background: '#DC6BE5', opacity: '1', borderRadius: '10px', width: '10px', height: '10px', marginRight: '3px', marginTop:'3px', marginLeft:'6px' }}></div>
             </Card>
           </div>
-        }
+          {/*<div className={ classes.aUSDCard }>
+            <div className={ classes.assetIcon }>
+              <img
+                alt=""
+                src={ require('../../../assets/fUSD-logo.png') }
+                height="30px"
+              />
+            </div>
+            <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>{ aUSD.name }</Typography>
+            <div className={ classes.aUSDBalance }>
+              <Typography variant={ 'h3'} noWrap>{ aUSD.balance }</Typography>
+              <Typography variant={ 'h4'} className={ classes.walletAddress } noWrap>{ aUSD.symbol }</Typography>
+            </div>
+          </div>*/}
+          <Card className={ classes.inputContainer }>
+            { !assets &&
+              <Typography variant='h3' className={ classes.inputCardHeading }>Loading assets ...</Typography>
+            }
+            { assets &&
+              <React.Fragment>
+                <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolWithdraw.Withdraw") }</Typography>
+                { this.renderWithdrawAssets() }
+                <Button
+                  className={ classes.actionButton }
+                  variant="outlined"
+                  color="primary"
+                  disabled={ loading }
+                  onClick={ this.onWithdraw }
+                  fullWidth
+                  >
+                  <Typography className={ classes.buttonText } variant={ 'h5'} color='secondary'>{ t('PoolWithdraw.Withdraw') }</Typography>
+                </Button>
+              </React.Fragment>
+            }
+          </Card>
+        </div>
         { modalOpen && this.renderModal() }
         { snackbarMessage && this.renderSnackbar() }
         { loading && <Loader /> }
@@ -373,16 +353,20 @@ class Withdraw extends Component {
 
   onWithdraw = () => {
     this.setState({ amountError: false })
+    let state = this.state
 
-    const { amount } = this.state
-
-    // if(!amount || isNaN(amount) || amount <= 0 || amount > asset.balance) {
-    //   this.setState({ amountError: true })
-    //   return false
-    // }
+    const sendAssets = state.assets.map((asset) => {
+      asset.amount = state[asset.id + '_withdraw']
+      if(asset.amount == null || asset.amount === '') {
+        asset.amount = 0
+      }
+      return asset
+    }).filter((asset) => {
+      return asset.amount > 0
+    })
 
     this.setState({ loading: true })
-    dispatcher.dispatch({ type: WITHDRAW_POOL, content: { amount: amount } })
+    dispatcher.dispatch({ type: WITHDRAW_POOL, content: { assets: sendAssets } })
   }
 
   renderModal = () => {
@@ -409,44 +393,53 @@ class Withdraw extends Component {
 
   onChange = (event) => {
     let val = []
-    val[event.target.name] = event.target.value
+    val[event.target.id] = event.target.value
     this.setState(val)
-
-    dispatcher.dispatch({ type: GET_WITHDRAW_PRICE, content: { sendAmount: event.target.value === '' ? '0' : event.target.value }})
   };
 
-  renderAmountInput = (id, value, error, label, placeholder, inputAdornment, disabled, hideBalance, sCrvBalance) => {
-    const { classes, loading } = this.props
-    const { assets } =  this.state
+  renderWithdrawAssets = () => {
+    const assets = this.state.assets
 
-    const sendAsset = assets.filter((asset) => { return asset.id === inputAdornment })[0]
+    return assets.map((asset) => {
+      return this.renderAssetInput(asset, 'withdraw')
+    })
+  }
+
+  renderAssetInput = (asset, type) => {
+    const {
+      classes
+    } = this.props
+
+    const {
+      loading
+    } = this.state
+
+    const amount = this.state[asset.id + '_' + type]
+    const amountError = this.state[asset.id + '_' + type + '_error']
 
     return (
       <div className={ classes.valContainer }>
         <div className={ classes.balances }>
-          <Typography variant='h3' className={ classes.title }></Typography>
-          <Typography variant='h4' onClick={ () => { if(hideBalance) { return; } this.setAmount(id, (sCrvBalance ? sCrvBalance : 0)) } } className={ classes.value } noWrap>{ !hideBalance ? ('Balance: '+ ( sCrvBalance ? sCrvBalance.toFixed(4) : '0.0000')) : '' } { !hideBalance ? (sendAsset ? sendAsset.symbol : '') : '' }</Typography>
-          { hideBalance && <div className={ classes.placceholder }></div> }
+          <Typography variant='h4' onClick={ () => { this.setAmount(asset.id, type, (asset ? asset.uniBalance : 0)) } } className={ classes.value } noWrap>{ 'Balance: '+ ( asset && asset.uniBalance ? (Math.floor(asset.uniBalance*10000)/10000).toFixed(4) : '0.0000') } { asset ? asset.uniSymbol : '' }</Typography>
         </div>
         <div>
           <TextField
             fullWidth
+            disabled={ loading }
             className={ classes.actionInput }
-            id={ id }
-            name={ id }
-            value={ value }
-            error={ error }
+            id={ '' + asset.id + '_' + type }
+            value={ amount }
+            error={ amountError }
             onChange={ this.onChange }
-            disabled={ loading || disabled }
-            placeholder={ placeholder }
+            placeholder="0.00"
             variant="outlined"
             InputProps={{
-              endAdornment: <InputAdornment position="end" className={ classes.inputAdornment }><Typography variant='h3'>{ inputAdornment }</Typography></InputAdornment>,
+              endAdornment: <InputAdornment position="end" className={ classes.inputAdornment }><Typography variant='h3' className={ '' }>{ asset.uniSymbol }</Typography></InputAdornment>,
               startAdornment: <InputAdornment position="end" className={ classes.inputAdornment }>
                 <div className={ classes.assetIcon }>
                   <img
                     alt=""
-                    src={ require('../../../assets/'+inputAdornment+'-logo.png') }
+                    src={ require('../../../assets/'+asset.id+'-logo.png') }
                     height="30px"
                   />
                 </div>
@@ -458,9 +451,10 @@ class Withdraw extends Component {
     )
   }
 
-  setAmount(id, balance) {
+  setAmount = (id, type, balance) => {
+    const bal = (Math.floor((balance === '' ? '0' : balance)*10000)/10000).toFixed(4)
     let val = []
-    val[id] = balance.toFixed(4)
+    val[id + '_' + type] = bal
     this.setState(val)
   }
 

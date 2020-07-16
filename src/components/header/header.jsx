@@ -210,6 +210,8 @@ function Header(props) {
     props.history.push('/'+screen)
   }
 
+  return(<div></div>)
+
   return (
     <div className={ classes.root }>
       <div className={ `${classes.earn}` } onClick={ () => { nav('earn') } }>

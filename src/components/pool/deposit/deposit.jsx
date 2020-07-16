@@ -18,8 +18,6 @@ import {
   ERROR,
   GET_POOL_BALANCES,
   POOL_BALANCES_RETURNED,
-  CONNECTION_CONNECTED,
-  CONNECTION_DISCONNECTED,
   DEPOSIT_POOL,
   DEPOSIT_POOL_RETURNED,
   GET_DEPOSIT_PRICE,
@@ -41,7 +39,7 @@ const styles = theme => ({
     flexDirection: 'column',
     maxWidth: '1200px',
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center'
   },
   introText: {
@@ -51,7 +49,7 @@ const styles = theme => ({
     width: '100%',
     position: 'relative',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   introCenter: {
@@ -104,6 +102,28 @@ const styles = theme => ({
     borderRadius: '0.75rem',
     marginBottom: '24px',
   },
+  aUSDCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    flex: 1,
+    whiteSpace: 'nowrap',
+    fontSize: '0.83rem',
+    padding: '28px 30px',
+    borderRadius: '50px',
+    border: '1px solid '+colors.borderBlue,
+    alignItems: 'center',
+    maxWidth: '500px',
+    marginTop: '40px',
+    background: colors.white,
+    [theme.breakpoints.up('md')]: {
+      width: '100%'
+    }
+  },
+  aUSDBalance: {
+    display: 'flex',
+    alignItems: 'center'
+  },
   addressContainer: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -117,6 +137,7 @@ const styles = theme => ({
     borderRadius: '50px',
     border: '1px solid '+colors.borderBlue,
     alignItems: 'center',
+    maxWidth: '500px',
     [theme.breakpoints.up('md')]: {
       width: '100%'
     }
@@ -139,8 +160,9 @@ const styles = theme => ({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    margin: '40px 20px',
+    margin: '40px 0px',
     border: '1px solid '+colors.borderBlue,
+    minWidth: '500px',
   },
   actionInput: {
     padding: '0px 0px 12px 0px',
@@ -175,10 +197,10 @@ const styles = theme => ({
   valContainer: {
     display: 'flex',
     flexDirection: 'column',
+    width: '100%'
   },
   inputCardHeading: {
     width: '100%',
-    padding: '12px 0px 12px 20px',
     color: colors.darkGray
   },
   placceholder: {
@@ -208,52 +230,26 @@ class Deposit extends Component {
     super()
 
     const account = store.getStore('account')
+    const assets = store.getStore('assets')
 
     this.state = {
+      loading: !assets,
       account: account,
-      assets: store.getStore('poolAssets'),
-      amount: '',
-    }
-
-    if(account && account.address) {
-      dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
+      assets: assets ? assets.filter((asset) => { return asset.balance > 0 }) : null,
+      aUSD: store.getStore('aUSD')
     }
   }
 
   componentWillMount() {
     emitter.on(ERROR, this.errorReturned);
     emitter.on(POOL_BALANCES_RETURNED, this.balancesReturned);
-    emitter.on(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.on(CONNECTION_DISCONNECTED, this.connectionDisconnected);
     emitter.on(DEPOSIT_POOL_RETURNED, this.depositPoolReturned);
-    emitter.on(DEPOSIT_PRICE_RETURNED, this.depositPriceReturned);
-    emitter.on(WITHDRAW_PRICE_RETURNED, this.withdrawPriceReturned);
   }
 
   componentWillUnmount() {
     emitter.removeListener(ERROR, this.errorReturned);
     emitter.removeListener(POOL_BALANCES_RETURNED, this.balancesReturned);
-    emitter.removeListener(CONNECTION_CONNECTED, this.connectionConnected);
-    emitter.removeListener(CONNECTION_DISCONNECTED, this.connectionDisconnected);
     emitter.removeListener(DEPOSIT_POOL_RETURNED, this.depositPoolReturned);
-    emitter.removeListener(DEPOSIT_PRICE_RETURNED, this.depositPriceReturned);
-    emitter.removeListener(WITHDRAW_PRICE_RETURNED, this.withdrawPriceReturned);
-  };
-
-  depositPriceReturned = (price) => {
-    this.setState({ amount: price ? parseFloat(price).toFixed(4) : '0.0000' })
-
-    dispatcher.dispatch({ type: GET_WITHDRAW_PRICE, content: { sendAmount: price }})
-  };
-
-  withdrawPriceReturned = (prices) => {
-    this.setState({
-      idealDAIAmount: (Math.floor(prices[0]*10000)/10000).toFixed(4),
-      idealUSDCAmount: (Math.floor(prices[1]*10000)/10000).toFixed(4),
-      idealUSDTAmount: (Math.floor(prices[2]*10000)/10000).toFixed(4),
-      idealTUSDAmount: (Math.floor(prices[3]*10000)/10000).toFixed(4),
-      idealSUSDAmount: (Math.floor(prices[4]*10000)/10000).toFixed(4)
-    })
   };
 
   depositPoolReturned  = (txHash) => {
@@ -266,74 +262,13 @@ class Deposit extends Component {
   };
 
   balancesReturned = (balances) => {
-    const poolAssets = store.getStore('poolAssets')
-    this.setState({ assets: poolAssets })
-    this.setDefaultValues(poolAssets)
-  };
-
-  ratioReturned = (ratio) => {
-    this.setState({ ratio: ratio })
-  };
-
-  setDefaultValues = (assets) => {
-    let that = this
-
-    let daiAmount = 0
-    let usdcAmount = 0
-    let usdtAmount = 0
-    let tusdAmount = 0
-    let susdAmount = 0
-
-    assets.map((asset) => {
-      switch (asset.id) {
-        case 'DAI':
-          that.setState({ daiAmount: (Math.floor(asset.balance*10000)/10000).toFixed(4) })
-          daiAmount = (Math.floor(asset.balance*10000)/10000).toFixed(4)
-          break;
-        case 'USDC':
-          that.setState({ usdcAmount: (Math.floor(asset.balance*10000)/10000).toFixed(4) })
-          usdcAmount = (Math.floor(asset.balance*10000)/10000).toFixed(4)
-          break;
-        case 'USDT':
-          that.setState({ usdtAmount: (Math.floor(asset.balance*10000)/10000).toFixed(4) })
-          usdtAmount = (Math.floor(asset.balance*10000)/10000).toFixed(4)
-          break;
-        case 'TUSD':
-          that.setState({ tusdAmount: (Math.floor(asset.balance*10000)/10000).toFixed(4) })
-          tusdAmount = (Math.floor(asset.balance*10000)/10000).toFixed(4)
-          break;
-        case 'SUSD':
-          that.setState({ susdAmount: (Math.floor(asset.balance*10000)/10000).toFixed(4) })
-          susdAmount = (Math.floor(asset.balance*10000)/10000).toFixed(4)
-          break;
-        default:
-      }
-    })
-
-    dispatcher.dispatch({ type: GET_DEPOSIT_PRICE, content: { daiAmount, usdcAmount, usdtAmount, tusdAmount, susdAmount }})
-  }
-
-  refresh() {
-    dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-  }
-
-  connectionConnected = () => {
-    const { t } = this.props
-
-    this.setState({ account: store.getStore('account') })
-
-    dispatcher.dispatch({ type: GET_POOL_BALANCES, content: {} })
-
-    const that = this
-    setTimeout(() => {
-      const snackbarObj = { snackbarMessage: t("Unlock.WalletConnected"), snackbarType: 'Info' }
-      that.setState(snackbarObj)
+    const assets = store.getStore('assets')
+    this.setState({
+      loading: false,
+      assets: assets.filter((asset) => { return asset.balance > 0 }),
+      aUSD: store.getStore('aUSD')
     })
   };
-
-  connectionDisconnected = () => {
-    this.setState({ account: store.getStore('account') })
-  }
 
   errorReturned = (error) => {
     const snackbarObj = { snackbarMessage: null, snackbarType: null }
@@ -350,69 +285,63 @@ class Deposit extends Component {
     const { classes, t } = this.props;
     const {
       account,
+      assets,
+      aUSD,
       loading,
-      snackbarMessage,
-      daiAmount,
-      usdcAmount,
-      usdtAmount,
-      tusdAmount,
-      susdAmount,
-      idealDAIAmount,
-      idealUSDCAmount,
-      idealUSDTAmount,
-      idealTUSDAmount,
-      idealSUSDAmount,
-      amount,
+      snackbarMessage
     } = this.state
 
     var address = null;
-    if (account.address) {
+    if (account && account.address) {
       address = account.address.substring(0,6)+'...'+account.address.substring(account.address.length-4,account.address.length)
     }
-
-    const curveSum = parseFloat(daiAmount != '' ? daiAmount : 0) + parseFloat(usdcAmount != '' ? usdcAmount : 0) + parseFloat(usdtAmount != '' ? usdtAmount : 0) + parseFloat(tusdAmount != '' ? tusdAmount : 0)
-    const susdSum = parseFloat(susdAmount != '' ? susdAmount : 0)
 
     return (
       <div className={ classes.root }>
         <div className={ classes.card }>
           <Typography variant={'h5'} className={ classes.disaclaimer }>This project is in beta. Use at your own risk.</Typography>
           <div className={ classes.intro }>
-            <Typography variant='h3' className={ classes.introText }>{ t('PoolDeposit.Intro') }</Typography>
             <Card className={ classes.addressContainer } onClick={this.overlayClicked}>
               <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>Wallet</Typography>
               <Typography variant={ 'h4'} className={ classes.walletAddress } noWrap>{ address }</Typography>
               <div style={{ background: '#DC6BE5', opacity: '1', borderRadius: '10px', width: '10px', height: '10px', marginRight: '3px', marginTop:'3px', marginLeft:'6px' }}></div>
             </Card>
           </div>
+          {/*<div className={ classes.aUSDCard }>
+            <div className={ classes.assetIcon }>
+              <img
+                alt=""
+                src={ require('../../../assets/fUSD-logo.png') }
+                height="30px"
+              />
+            </div>
+            <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>{ aUSD.name }</Typography>
+            <div className={ classes.aUSDBalance }>
+              <Typography variant={ 'h3'} noWrap>{ aUSD.balance }</Typography>
+              <Typography variant={ 'h4'} className={ classes.walletAddress } noWrap>{ aUSD.symbol }</Typography>
+            </div>
+          </div>*/}
           <div className={ classes.idealHolder }>
             <Card className={ classes.inputContainer }>
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolDeposit.Deposit") }</Typography>
-              { this.renderAmountInput('daiAmount', daiAmount, false, 'DAI', '0.00', 'DAI') }
-              { this.renderAmountInput('usdcAmount', usdcAmount, false, 'USDC', '0.00', 'USDC') }
-              { this.renderAmountInput('usdtAmount', usdtAmount, false, 'USDT', '0.00', 'USDT') }
-              { this.renderAmountInput('tusdAmount', tusdAmount, false, 'TUSD', '0.00', 'TUSD') }
-              { this.renderAmountInput('susdAmount', susdAmount, false, 'SUSD', '0.00', 'SUSD') }
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolDeposit.IWillReceive") }</Typography>
-              { this.renderAmountInput('amount', amount, false, 'CRV', '0.00', 'CRV', true, true) }
-              <Button
-                className={ classes.actionButton }
-                variant="outlined"
-                color="primary"
-                disabled={ loading || !(daiAmount > 0 || usdcAmount > 0 || usdtAmount > 0 || tusdAmount > 0) }
-                onClick={ this.onDeposit }
-                fullWidth
-                >
-                <Typography className={ classes.buttonText } variant={ 'h5'} color='secondary'>{ t('PoolDeposit.Deposit') }</Typography>
-              </Button>
-            </Card>
-            <Card className={ classes.inputContainer }>
-              <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolDeposit.Ideal") }</Typography>
-              { this.renderAmountInput('daiAmount', idealDAIAmount, false, 'DAI', '0.00', 'DAI', true, true, true) }
-              { this.renderAmountInput('usdcAmount', idealUSDCAmount, false, 'USDC', '0.00', 'USDC', true, true, true) }
-              { this.renderAmountInput('usdtAmount', idealUSDTAmount, false, 'USDT', '0.00', 'USDT', true, true, true) }
-              { this.renderAmountInput('tusdAmount', idealTUSDAmount, false, 'TUSD', '0.00', 'TUSD', true, true, true) }
-              { this.renderAmountInput('susdAmount', idealSUSDAmount, false, 'SUSD', '0.00', 'SUSD', true, true, true) }
+              { !assets &&
+                <Typography variant='h3' className={ classes.inputCardHeading }>Loading assets ...</Typography>
+              }
+              { assets &&
+                <React.Fragment>
+                  <Typography variant='h3' className={ classes.inputCardHeading }>{ t("PoolDeposit.Deposit") }</Typography>
+                  { this.renderDepositAssets() }
+                  <Button
+                    className={ classes.actionButton }
+                    variant="outlined"
+                    color="primary"
+                    disabled={ loading }
+                    onClick={ this.onDeposit }
+                    fullWidth
+                    >
+                    <Typography className={ classes.buttonText } variant={ 'h5'} color='secondary'>{ t('PoolDeposit.Deposit') }</Typography>
+                  </Button>
+                </React.Fragment>
+              }
             </Card>
           </div>
         </div>
@@ -422,99 +351,49 @@ class Deposit extends Component {
     )
   };
 
-  onDeposit = () => {
-    this.setState({ amountError: false })
+  renderDepositAssets = () => {
+    const assets = this.state.assets
 
-    let { daiAmount, usdcAmount, usdtAmount, tusdAmount, susdAmount } = this.state
-
-    daiAmount = daiAmount === '' ? '0' : daiAmount
-    usdcAmount = usdcAmount === '' ? '0' : usdcAmount
-    usdtAmount = usdtAmount === '' ? '0' : usdtAmount
-    tusdAmount = tusdAmount === '' ? '0' : tusdAmount
-    susdAmount = susdAmount === '' ? '0' : susdAmount
-
-    this.setState({ loading: true })
-    dispatcher.dispatch({ type: DEPOSIT_POOL, content: { daiAmount: daiAmount, usdcAmount: usdcAmount, usdtAmount: usdtAmount, tusdAmount: tusdAmount, susdAmount: susdAmount } })
+    return assets.map((asset) => {
+      return this.renderAssetInput(asset, 'deposit')
+    })
   }
 
-  renderSnackbar = () => {
-    var {
-      snackbarType,
-      snackbarMessage
+  renderAssetInput = (asset, type) => {
+    const {
+      classes
+    } = this.props
+
+    const {
+      loading
     } = this.state
-    return <Snackbar type={ snackbarType } message={ snackbarMessage } open={true}/>
-  };
 
-  onChange = (event) => {
-    if(event.target.value !== '' && (!event.target.value || isNaN(event.target.value) || event.target.value < 0)) {
-      return false
-    }
-
-    let val = []
-    val[event.target.name] = event.target.value
-    this.setState(val)
-
-    let { daiAmount, usdcAmount, usdtAmount, tusdAmount, susdAmount } = this.state
-
-    const bal = event.target.value === '' ? '0' : event.target.value
-
-    daiAmount = daiAmount === '' ? '0' : daiAmount
-    usdcAmount = usdcAmount === '' ? '0' : usdcAmount
-    usdtAmount = usdtAmount === '' ? '0' : usdtAmount
-    tusdAmount = tusdAmount === '' ? '0' : tusdAmount
-    susdAmount = susdAmount === '' ? '0' : susdAmount
-
-    if(event.target.name === 'daiAmount') {
-      daiAmount = bal
-    }
-    if(event.target.name === 'usdcAmount') {
-      usdcAmount = bal
-    }
-    if(event.target.name === 'usdtAmount') {
-      usdtAmount = bal
-    }
-    if(event.target.name === 'tusdAmount') {
-      tusdAmount = bal
-    }
-    if(event.target.name === 'susdAmount') {
-      susdAmount = bal
-    }
-
-    dispatcher.dispatch({ type: GET_DEPOSIT_PRICE, content: { daiAmount, usdcAmount, usdtAmount, tusdAmount, susdAmount }})
-  };
-
-  renderAmountInput = (id, value, error, label, placeholder, inputAdornment, disabled, hideBalance, disabledAdornment) => {
-    const { classes, loading } = this.props
-    const { assets } =  this.state
-
-    const sendAsset = assets.filter((asset) => { return asset.id === inputAdornment })[0]
+    const amount = this.state[asset.id + '_' + type]
+    const amountError = this.state[asset.id + '_' + type + '_error']
 
     return (
       <div className={ classes.valContainer }>
         <div className={ classes.balances }>
-          <Typography variant='h3' className={ classes.title }></Typography>
-          <Typography variant='h4' onClick={ () => { if(hideBalance) { return; } this.setAmount(id, (sendAsset ? sendAsset.balance : 0)) } } className={ classes.value } noWrap>{ !hideBalance ? ('Balance: '+ ( sendAsset && sendAsset.balance ? (Math.floor(sendAsset.balance*10000)/10000).toFixed(4) : '0.0000')) : '' } { !hideBalance ? (sendAsset ? sendAsset.symbol : '') : '' }</Typography>
-          { hideBalance && <div className={ classes.placceholder }></div> }
+          <Typography variant='h4' onClick={ () => { this.setAmount(asset.id, type, (asset ? asset.balance : 0)) } } className={ classes.value } noWrap>{ 'Balance: '+ ( asset && asset.balance ? (Math.floor(asset.balance*10000)/10000).toFixed(4) : '0.0000') } { asset ? asset.symbol : '' }</Typography>
         </div>
         <div>
           <TextField
             fullWidth
+            disabled={ loading }
             className={ classes.actionInput }
-            id={ id }
-            name={ id }
-            value={ value }
-            error={ error }
+            id={ '' + asset.id + '_' + type }
+            value={ amount }
+            error={ amountError }
             onChange={ this.onChange }
-            disabled={ loading || disabled }
-            placeholder={ placeholder }
+            placeholder="0.00"
             variant="outlined"
             InputProps={{
-              endAdornment: <InputAdornment position="end" className={ classes.inputAdornment }><Typography variant='h3' className={ disabledAdornment ? classes.disabledAdornment : '' }>{ inputAdornment }</Typography></InputAdornment>,
+              endAdornment: <InputAdornment position="end" className={ classes.inputAdornment }><Typography variant='h3' className={ '' }>{ asset.symbol }</Typography></InputAdornment>,
               startAdornment: <InputAdornment position="end" className={ classes.inputAdornment }>
                 <div className={ classes.assetIcon }>
                   <img
                     alt=""
-                    src={ require('../../../assets/'+inputAdornment+'-logo.png') }
+                    src={ require('../../../assets/'+asset.id+'-logo.png') }
                     height="30px"
                   />
                 </div>
@@ -526,39 +405,44 @@ class Deposit extends Component {
     )
   }
 
-  setAmount(id, balance) {
-    const bal = (Math.floor((balance === '' ? '0' : balance)*10000)/10000).toFixed(4)
-    let val = []
-    val[id] = bal
-    this.setState(val)
+  onDeposit = () => {
+    this.setState({ amountError: false })
+    let state = this.state
 
-    let { daiAmount, usdcAmount, usdtAmount, tusdAmount, susdAmount } = this.state
+    const sendAssets = state.assets.map((asset) => {
+      asset.amount = state[asset.id + '_deposit']
+      if(asset.amount == null || asset.amount === '') {
+        asset.amount = 0
+      }
+      return asset
+    }).filter((asset) => {
+      return asset.amount > 0
+    })
 
-    daiAmount = daiAmount === '' ? '0' : daiAmount
-    usdcAmount = usdcAmount === '' ? '0' : usdcAmount
-    usdtAmount = usdtAmount === '' ? '0' : usdtAmount
-    tusdAmount = tusdAmount === '' ? '0' : tusdAmount
-    susdAmount = susdAmount === '' ? '0' : susdAmount
-
-    if(id === 'daiAmount') {
-      daiAmount = bal
-    }
-    if(id === 'usdcAmount') {
-      usdcAmount = bal
-    }
-    if(id === 'usdtAmount') {
-      usdtAmount = bal
-    }
-    if(id === 'tusdAmount') {
-      tusdAmount = bal
-    }
-    if(id === 'susdAmount') {
-      susdAmount = bal
-    }
-
-    dispatcher.dispatch({ type: GET_DEPOSIT_PRICE, content: { daiAmount, usdcAmount, usdtAmount, tusdAmount, susdAmount }})
+    this.setState({ loading: true })
+    dispatcher.dispatch({ type: DEPOSIT_POOL, content: { assets: sendAssets } })
   }
 
+  renderSnackbar = () => {
+    var {
+      snackbarType,
+      snackbarMessage
+    } = this.state
+    return <Snackbar type={ snackbarType } message={ snackbarMessage } open={true}/>
+  };
+
+  onChange = (event) => {
+    let val = []
+    val[event.target.id] = event.target.value
+    this.setState(val)
+  }
+
+  setAmount = (id, type, balance) => {
+    const bal = (Math.floor((balance === '' ? '0' : balance)*10000)/10000).toFixed(4)
+    let val = []
+    val[id + '_' + type] = bal
+    this.setState(val)
+  }
 }
 
 export default withNamespaces()(withRouter(withStyles(styles)(Deposit)));
