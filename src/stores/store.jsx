@@ -83,13 +83,150 @@ class Store {
       ],
       assets: [
         {
+          "address": "0xfC1E690f61EFd961294b3e1Ce3313fBD8aa4f85d",
+          "id": "aDAI",
+          "symbol": "aDAI",
+          "decimals": "18",
+          "name": "Aave Interest bearing DAI",
+          "type": "aave"
+        },
+        {
+          "address": "0x4DA9b813057D04BAef4e5800E36083717b4a0341",
+          "id": "aTUSD",
+          "symbol": "aTUSD",
+          "decimals": "18",
+          "name": "Aave Interest bearing TUSD",
+          "type": "aave"
+        },
+        {
+          "address": "0x9bA00D6856a4eDF4665BcA2C2309936572473B7E",
+          "id": "aUSDC",
+          "symbol": "aUSDC",
+          "decimals": "6",
+          "name": "Aave Interest bearing USDC",
+          "type": "aave"
+        },
+        {
+          "address": "0x71fc860F7D3A592A4a98740e39dB31d25db65ae8",
+          "id": "aUSDT",
+          "symbol": "aUSDT",
+          "decimals": "6",
+          "name": "Aave Interest bearing USDT",
+          "type": "aave"
+        },
+        {
+          "address": "0x625aE63000f46200499120B906716420bd059240",
+          "id": "aSUSD",
+          "symbol": "aSUSD",
+          "decimals": "18",
+          "name": "Aave Interest bearing SUSD",
+          "type": "aave"
+        },
+        {
+          "address": "0x7D2D3688Df45Ce7C552E19c27e007673da9204B8",
+          "id": "aLEND",
+          "symbol": "aLEND",
+          "decimals": "18",
+          "name": "Aave Interest bearing LEND",
+          "type": "aave"
+        },
+        {
+          "address": "0xE1BA0FB44CCb0D11b80F92f4f8Ed94CA3fF51D00",
+          "id": "aBAT",
+          "symbol": "aBAT",
+          "decimals": "18",
+          "name": "Aave Interest bearing BAT",
+          "type": "aave"
+        },
+        {
+          "address": "0x3a3A65aAb0dd2A17E3F1947bA16138cd37d08c04",
+          "id": "aETH",
+          "symbol": "aETH",
+          "decimals": "18",
+          "name": "Aave Interest bearing ETH",
+          "type": "aave"
+        },
+        {
+          "address": "0xA64BD6C70Cb9051F6A9ba1F163Fdc07E0DfB5F84",
+          "id": "aLINK",
+          "symbol": "aLINK",
+          "decimals": "18",
+          "name": "Aave Interest bearing LINK",
+          "type": "aave"
+        },
+        {
+          "address": "0x9D91BE44C06d373a8a226E1f3b146956083803eB",
+          "id": "aKNC",
+          "symbol": "aKNC",
+          "decimals": "18",
+          "name": "Aave Interest bearing KNC",
+          "type": "aave"
+        },
+        {
+          "address": "0x71010A9D003445aC60C4e6A7017c1E89A477B438",
+          "id": "aREP",
+          "symbol": "aREP",
+          "decimals": "18",
+          "name": "Aave Interest bearing REP",
+          "type": "aave"
+        },
+        {
+          "address": "0x7deB5e830be29F91E298ba5FF1356BB7f8146998",
+          "id": "aMKR",
+          "symbol": "aMKR",
+          "decimals": "18",
+          "name": "Aave Interest bearing MKR",
+          "type": "aave"
+        },
+        {
+          "address": "0x6FCE4A401B6B80ACe52baAefE4421Bd188e76F6f",
+          "id": "aMANA",
+          "symbol": "aMANA",
+          "decimals": "18",
+          "name": "Aave Interest bearing MANA",
+          "type": "aave"
+        },
+        {
+          "address": "0x6Fb0855c404E09c47C3fBCA25f08d4E41f9F062f",
+          "id": "aZRX",
+          "symbol": "aZRX",
+          "decimals": "18",
+          "name": "Aave Interest bearing ZRX",
+          "type": "aave"
+        },
+        {
+          "address": "0x328C4c80BC7aCa0834Db37e6600A6c49E12Da4DE",
+          "id": "aSNX",
+          "symbol": "aSNX",
+          "decimals": "18",
+          "name": "Aave Interest bearing SNX",
+          "type": "aave"
+        },
+        {
+          "address": "0xFC4B8ED459e00e5400be803A9BB3954234FD50e3",
+          "id": "aWBTC",
+          "symbol": "aWBTC",
+          "decimals": "8",
+          "name": "Aave Interest bearing WBTC",
+          "type": "aave"
+        },
+        {
+          "address": "0x6Ee0f7BB50a54AB5253dA0667B0Dc2ee526C30a8",
+          "id": "aBUSD",
+          "symbol": "aBUSD",
+          "decimals": "18",
+          "name": "Aave Interest bearing Binance USD",
+          "type": "aave"
+        },
+        {
           "address": "0x4e15361fd6b4bb609fa63c81a2be19d873717870",
           "uniAddress": "0xcc21352243514e6d9c02e42287cda0def94e85bf",
       		"id": "FTM",
       		"symbol": "FTM",
       		"decimals": "18",
       		"name": "Fantom",
-          "uniSymbol": "FTMUNI"
+          "uniSymbol": "FTMUNI",
+          "type": "chainlink"
         },
         {
       		"address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
@@ -98,7 +235,8 @@ class Store {
       		"symbol": "DAI",
       		"decimals": "18",
       		"name": "DAI Stablecoin",
-          "uniSymbol": "DAIUNI"
+          "uniSymbol": "DAIUNI",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x0000000000085d4780B73119b644AE5ecd22b376",
@@ -106,6 +244,7 @@ class Store {
       		"symbol": "TUSD",
       		"decimals": "18",
       		"name": "TrueUSD",
+          "type": "chainlink"
       	},
       	{
       		"address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -113,119 +252,135 @@ class Store {
       		"symbol": "USDC",
       		"decimals": "6",
       		"name": "USD Coin",
+          "type": "chainlink"
       	},
       	{
       		"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
       		"id": "USDT",
       		"symbol": "USDT",
       		"decimals": "6",
-      		"name": "Tether USD"
+      		"name": "Tether USD",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
       		"id": "SUSD",
       		"symbol": "SUSD",
       		"decimals": "18",
-      		"name": "Synth sUSD"
+      		"name": "Synth sUSD",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
       		"id": "LEND",
       		"symbol": "LEND",
       		"decimals": "18",
-      		"name": "EthLend"
+      		"name": "EthLend",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x0D8775F648430679A709E98d2b0Cb6250d2887EF",
       		"id": "BAT",
       		"symbol": "BAT",
       		"decimals": "18",
-      		"name": "BAT"
+      		"name": "BAT",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
       		"id": "LINK",
       		"symbol": "LINK",
       		"decimals": "18",
-      		"name": "ChainLink Token"
+      		"name": "ChainLink Token",
+          "type": "chainlink"
       	},
       	{
       		"address": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
       		"id": "KNC",
       		"symbol": "KNC",
       		"decimals": "18",
-      		"name": "KyberNetwork"
+      		"name": "KyberNetwork",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x1985365e9f78359a9B6AD760e32412f4a445E862",
       		"id": "REP",
       		"symbol": "REP",
       		"decimals": "18",
-      		"name": "Reputation"
+      		"name": "Reputation",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
       		"id": "MKR",
       		"symbol": "MKR",
       		"decimals": "18",
-      		"name": "Maker"
+      		"name": "Maker",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942",
       		"id": "MANA",
       		"symbol": "MANA",
       		"decimals": "18",
-      		"name": "Decentraland"
+      		"name": "Decentraland",
+          "type": "chainlink"
       	},
       	{
       		"address": "0xE41d2489571d322189246DaFA5ebDe1F4699F498",
       		"id": "ZRX",
       		"symbol": "ZRX",
       		"decimals": "18",
-      		"name": "0x"
+      		"name": "0x",
+          "type": "chainlink"
       	},
       	{
       		"address": "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F",
       		"id": "SNX",
       		"symbol": "SNX",
       		"decimals": "18",
-      		"name": "Synthetix Network Token"
+      		"name": "Synthetix Network Token",
+          "type": "chainlink"
       	},
       	{
       		"address": "0x4Fabb145d64652a948d72533023f6E7A623C7C53",
       		"id": "BUSD",
       		"symbol": "BUSD",
       		"decimals": "18",
-      		"name": "Binance USD"
+      		"name": "Binance USD",
+          "type": "chainlink"
       	},
         {
           "address": "0xbbbbca6a901c926f240b89eacb641d8aec7aeafd",
           "id": "LRC",
       		"symbol": "LRC",
       		"decimals": "18",
-      		"name": "LoopringCoin"
+      		"name": "LoopringCoin",
+          "type": "chainlink"
         },
         {
           "address": "0x408e41876cccdc0f92210600ef50372656052a38",
           "id": "REN",
       		"symbol": "REN",
       		"decimals": "18",
-      		"name": "Republic"
+      		"name": "Republic",
+          "type": "chainlink"
         },
         {
           "address": "0xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c",
           "id": "ENJ",
       		"symbol": "ENJ",
       		"decimals": "18",
-      		"name": "EnjinCoin"
-        }
+      		"name": "EnjinCoin",
+          "type": "chainlink"
+        },
       ],
       aUSD: {
-        "address": "0x967fb06a8d8428bc9d03436d06694704e9bf7019",
-        "id": "fUSD",
-        "symbol": "fUSD",
+        "address": config.aUSDAddress,
+        "id": "aUSD",
+        "symbol": "aUSD",
         "decimals": "18",
-        "name": "Fantom AMM USD"
+        "name": "AMM USD"
       }
     }
 
@@ -698,6 +853,12 @@ class Store {
     deadline = deadline + 1600
 
     const path = [fromAsset, config.aUSDAddress, config.aUSDAddress, toAsset]
+
+    console.log(fromAmountToSend)
+    console.log(toAmountToSend)
+    console.log(path)
+    console.log(account.address)
+    console.log(deadline)
 
     exchangeContract.methods.swapExactTokensForTokens(fromAmountToSend, toAmountToSend, path, account.address, deadline).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
       .on('transactionHash', function(hash){
