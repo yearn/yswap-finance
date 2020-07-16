@@ -49,7 +49,7 @@ class Store {
   constructor() {
 
     this.store = {
-      universalGasPrice: '55',
+      universalGasPrice: '70',
       account: {},
       web3: null,
       connectorsByName: {
@@ -220,7 +220,6 @@ class Store {
         },
         {
           "address": "0x4e15361fd6b4bb609fa63c81a2be19d873717870",
-          "uniAddress": "0xcc21352243514e6d9c02e42287cda0def94e85bf",
       		"id": "FTM",
       		"symbol": "FTM",
       		"decimals": "18",
@@ -230,7 +229,6 @@ class Store {
         },
         {
       		"address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-          "uniAddress": "0x4e587C3E210cbC44a744FA01Bbd86367078fCc61",
       		"id": "DAI",
       		"symbol": "DAI",
       		"decimals": "18",
@@ -531,7 +529,7 @@ class Store {
   }
 
   _getUniBalance = async (web3, asset, account, callback) => {
-    if(!asset.uniAddress) {
+    if(!asset.uniAddress || asset.uniAddress === "0x0000000000000000000000000000000000000000") {
       return callback(null, 0)
     }
 
@@ -690,7 +688,21 @@ class Store {
       amountToSend = (amount*10**asset.decimals).toFixed(0);
     }
 
-    aUSDContract.methods.deposit(token, amountToSend).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
+    let method = ''
+
+    if(asset.type === 'chainlink') {
+      method = 'deposit'
+    } else if (asset.type === 'aave') {
+      method = 'depositAave'
+    } else {
+      return
+    }
+
+    console.log(method)
+    console.log(token)
+    console.log(amountToSend)
+
+    aUSDContract.methods[method](token, amountToSend).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
       .on('transactionHash', function(hash){
         console.log(hash)
         callback(null, hash)
@@ -771,7 +783,17 @@ class Store {
       amountToSend = (amount*10**asset.decimals).toFixed(0);
     }
 
-    aUSDContract.methods.withdraw(token, amountToSend).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
+    let method = ''
+
+    if(asset.type === 'chainlink') {
+      method = 'withdraw'
+    } else if (asset.type === 'aave') {
+      method = 'withdrawAave'
+    } else {
+      return
+    }
+
+    aUSDContract.methods[method](token, amountToSend).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
       .on('transactionHash', function(hash){
         console.log(hash)
         callback(null, hash)
@@ -852,7 +874,7 @@ class Store {
     let deadline = moment().unix()
     deadline = deadline + 1600
 
-    const path = [fromAsset, config.aUSDAddress, config.aUSDAddress, toAsset]
+    const path = [fromAsset, config.aUSDAddress, toAsset]
 
     console.log(fromAmountToSend)
     console.log(toAmountToSend)

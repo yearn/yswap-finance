@@ -236,7 +236,6 @@ class Deposit extends Component {
       loading: !assets,
       account: account,
       assets: assets ? assets.filter((asset) => { return asset.balance > 0 }) : null,
-      aUSD: store.getStore('aUSD')
     }
   }
 
@@ -265,8 +264,7 @@ class Deposit extends Component {
     const assets = store.getStore('assets')
     this.setState({
       loading: false,
-      assets: assets.filter((asset) => { return asset.balance > 0 }),
-      aUSD: store.getStore('aUSD')
+      assets: assets ? assets.filter((asset) => { return asset.balance > 0 }) : null
     })
   };
 
@@ -286,7 +284,6 @@ class Deposit extends Component {
     const {
       account,
       assets,
-      aUSD,
       loading,
       snackbarMessage
     } = this.state
@@ -372,7 +369,7 @@ class Deposit extends Component {
     const amountError = this.state[asset.id + '_' + type + '_error']
 
     return (
-      <div className={ classes.valContainer }>
+      <div className={ classes.valContainer } key={asset.id + '_' + type}>
         <div className={ classes.balances }>
           <Typography variant='h4' onClick={ () => { this.setAmount(asset.id, type, (asset ? asset.balance : 0)) } } className={ classes.value } noWrap>{ 'Balance: '+ ( asset && asset.balance ? (Math.floor(asset.balance*10000)/10000).toFixed(4) : '0.0000') } { asset ? asset.symbol : '' }</Typography>
         </div>
@@ -419,8 +416,10 @@ class Deposit extends Component {
       return asset.amount > 0
     })
 
-    this.setState({ loading: true })
-    dispatcher.dispatch({ type: DEPOSIT_POOL, content: { assets: sendAssets } })
+    if(sendAssets.length > 0) {
+      this.setState({ loading: true })
+      dispatcher.dispatch({ type: DEPOSIT_POOL, content: { assets: sendAssets } })
+    }
   }
 
   renderSnackbar = () => {

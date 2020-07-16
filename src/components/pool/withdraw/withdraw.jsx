@@ -235,8 +235,7 @@ class Withdraw extends Component {
     this.state = {
       loading: !assets,
       account: account,
-      assets: assets.filter((asset) => { return asset.uniBalance > 0 }),
-      aUSD: store.getStore('aUSD'),
+      assets: assets.filter((asset) => { return asset.uniBalance > 0 })
     }
   }
 
@@ -264,7 +263,6 @@ class Withdraw extends Component {
   balancesReturned = (balances) => {
     this.setState({
       assets: store.getStore('assets').filter((asset) => { return asset.uniBalance > 0 }),
-      aUSD: store.getStore('aUSD'),
       loading: false
     })
   };
@@ -289,7 +287,6 @@ class Withdraw extends Component {
       snackbarMessage,
       amount,
       assets,
-      aUSD,
     } = this.state
 
     var address = null;
@@ -365,8 +362,10 @@ class Withdraw extends Component {
       return asset.amount > 0
     })
 
-    this.setState({ loading: true })
-    dispatcher.dispatch({ type: WITHDRAW_POOL, content: { assets: sendAssets } })
+    if(sendAssets.length > 0) {
+      this.setState({ loading: true })
+      dispatcher.dispatch({ type: WITHDRAW_POOL, content: { assets: sendAssets } })
+    }
   }
 
   renderModal = () => {
@@ -418,9 +417,9 @@ class Withdraw extends Component {
     const amountError = this.state[asset.id + '_' + type + '_error']
 
     return (
-      <div className={ classes.valContainer }>
+      <div className={ classes.valContainer } key={asset.id + '_' + type}>
         <div className={ classes.balances }>
-          <Typography variant='h4' onClick={ () => { this.setAmount(asset.id, type, (asset ? asset.uniBalance : 0)) } } className={ classes.value } noWrap>{ 'Balance: '+ ( asset && asset.uniBalance ? (Math.floor(asset.uniBalance*10000)/10000).toFixed(4) : '0.0000') } { asset ? asset.uniSymbol : '' }</Typography>
+          <Typography variant='h4' onClick={ () => { this.setAmount(asset.id, type, (asset ? asset.uniBalance : 0)) } } className={ classes.value } noWrap>{ 'Balance: '+ ( asset && asset.uniBalance ? (Math.floor(asset.uniBalance*10000)/10000).toFixed(4) : '0.0000') } { asset ? (asset.symbol+'UNI') : '' }</Typography>
         </div>
         <div>
           <TextField
@@ -434,7 +433,7 @@ class Withdraw extends Component {
             placeholder="0.00"
             variant="outlined"
             InputProps={{
-              endAdornment: <InputAdornment position="end" className={ classes.inputAdornment }><Typography variant='h3' className={ '' }>{ asset.uniSymbol }</Typography></InputAdornment>,
+              endAdornment: <InputAdornment position="end" className={ classes.inputAdornment }><Typography variant='h3' className={ '' }>{ (asset.symbol+'UNI') }</Typography></InputAdornment>,
               startAdornment: <InputAdornment position="end" className={ classes.inputAdornment }>
                 <div className={ classes.assetIcon }>
                   <img

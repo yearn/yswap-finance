@@ -273,7 +273,7 @@ class Exchange extends Component {
     this.state = {
       priceLoading: false,
       account: account,
-      assets: store.getStore('assets'),
+      assets: store.getStore('assets').filter((asset) => { return (asset.uniAddress && asset.uniAddress != '0x0000000000000000000000000000000000000000') }),
       fromAsset: "",
       toAsset: "",
       fromAmount: "",
@@ -323,7 +323,7 @@ class Exchange extends Component {
   };
 
   balancesReturned = (balances) => {
-    this.setState({ assets: store.getStore('assets') })
+    this.setState({ assets: store.getStore('assets').filter((asset) => { return (asset.uniAddress && asset.uniAddress != '0x0000000000000000000000000000000000000000') }) })
   };
 
   errorReturned = (error) => {
