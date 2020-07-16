@@ -834,8 +834,10 @@ class Store {
 
     var amountToSend = web3.utils.toWei(amount, "ether")
 
-    let price = await exchangeContract.methods.quote(amountToSend, fromAsset, toAsset).call({ from: account.address })
-    price = web3.utils.fromWei(price, "ether")
+    const path = [fromAsset, config.aUSDAddress, toAsset]
+
+    let price = await exchangeContract.methods.getAmountsOut(amountToSend, path).call({ from: account.address })
+    price = web3.utils.fromWei(price[2], "ether")
 
     return emitter.emit(EXCHANGE_PRICE_RETURNED, price)
   }
@@ -868,8 +870,8 @@ class Store {
     const exchangeContract = new web3.eth.Contract(config.uniswapContractABI, config.uniswapContractAddress)
 
     let fromAmountToSend = web3.utils.toWei(fromAmount, "ether")
-    // let toAmountToSend = web3.utils.toWei(toAmount, "ether")
-    let toAmountToSend = (toAmount*1e8).toFixed(0)
+    let toAmountToSend = web3.utils.toWei((toAmount*99/100).toFixed(8), "ether")
+    // let toAmountToSend = (toAmount*1e8).toFixed(0)
 
     let deadline = moment().unix()
     deadline = deadline + 1600
