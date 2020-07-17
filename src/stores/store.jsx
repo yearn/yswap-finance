@@ -434,12 +434,18 @@ class Store {
       async.parallel([
         (callbackInner) => { this._getERC20Balance(web3, asset, account, callbackInner) },
         (callbackInner) => { this._getUniAddress(web3, asset, account, callbackInner) },
+        // (callbackInner) => { this._getDecimals(web3, asset, account, callbackInner) },
       ], (err, data) => {
         if(err) {
           console.log(err)
         }
         asset.balance = data[0]
         asset.uniAddress = data[1]
+        // if(data[2] != 18) {
+        //   console.log(asset)
+        //   console.log(data[2])
+        // }
+        // asset.decimals = data[2]
 
         this._getUniBalance(web3, asset, account, (err, uniBalance) => {
           asset.uniBalance = uniBalance
@@ -523,6 +529,17 @@ class Store {
     try {
       var uniAddress = await aUSDContract.methods.getUNI(asset.address).call({ from: account.address });
       callback(null, uniAddress)
+    } catch(ex) {
+      return callback(ex)
+    }
+  }
+
+  _getDecimals = async (web3, asset, account, callback) => {
+    let erc20Contract = new web3.eth.Contract(config.erc20ABI, asset.address)
+
+    try {
+      var decimals = await erc20Contract.methods.decimals().call({ from: account.address });
+      callback(null, decimals)
     } catch(ex) {
       return callback(ex)
     }
@@ -698,9 +715,9 @@ class Store {
       return
     }
 
-    console.log(method)
-    console.log(token)
-    console.log(amountToSend)
+    // console.log(method)
+    // console.log(token)
+    // console.log(amountToSend)
 
     aUSDContract.methods[method](token, amountToSend).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
       .on('transactionHash', function(hash){
@@ -827,17 +844,32 @@ class Store {
 
   getExchangePrice = async (payload) => {
     const account = store.getStore('account')
+    const assets = store.getStore('assets')
     const { fromAsset, toAsset, amount } = payload.content
 
     const web3 = new Web3(store.getStore('web3context').library.provider);
     const exchangeContract = new web3.eth.Contract(config.uniswapContractABI, config.uniswapContractAddress)
 
+    let asset = assets.filter((asset) => { return asset.address === fromAsset })[0]
+
     var amountToSend = web3.utils.toWei(amount, "ether")
+    if (asset.decimals != 18) {
+      amountToSend = (amount*10**asset.decimals).toFixed(0);
+    }
 
     const path = [fromAsset, config.aUSDAddress, toAsset]
 
+    // console.log(amountToSend)
+
     let price = await exchangeContract.methods.getAmountsOut(amountToSend, path).call({ from: account.address })
+
+    // console.log(price)
+    asset = assets.filter((asset) => { return asset.address === toAsset })[0]
+
     price = web3.utils.fromWei(price[2], "ether")
+    if (asset.decimals != 18) {
+      price = (price[2]/(10**asset.decimals)).toFixed(0);
+    }
 
     return emitter.emit(EXCHANGE_PRICE_RETURNED, price)
   }
@@ -866,23 +898,35 @@ class Store {
 
   _callExchangePool = async (fromAsset, toAsset, fromAmount, toAmount, account, callback) => {
     const web3 = new Web3(store.getStore('web3context').library.provider);
+    const assets = store.getStore('assets')
 
     const exchangeContract = new web3.eth.Contract(config.uniswapContractABI, config.uniswapContractAddress)
 
-    let fromAmountToSend = web3.utils.toWei(fromAmount, "ether")
-    let toAmountToSend = web3.utils.toWei((toAmount*99/100).toFixed(8), "ether")
-    // let toAmountToSend = (toAmount*1e8).toFixed(0)
+    let asset = assets.filter((asset) => { return asset.address === fromAsset })[0]
+
+    var fromAmountToSend = web3.utils.toWei(fromAmount, "ether")
+    if (asset.decimals != 18) {
+      fromAmountToSend = (fromAmount*10**asset.decimals).toFixed(0);
+    }
+
+    asset = assets.filter((asset) => { return asset.address === toAsset })[0]
+
+    let toAmountString = (toAmount*99/100).toFixed(8)
+    var toAmountToSend = web3.utils.toWei(toAmountString, "ether")
+    if (asset.decimals != 18) {
+      toAmountToSend = (toAmountString*10**asset.decimals).toFixed(0);
+    }
 
     let deadline = moment().unix()
     deadline = deadline + 1600
 
     const path = [fromAsset, config.aUSDAddress, toAsset]
-
-    console.log(fromAmountToSend)
-    console.log(toAmountToSend)
-    console.log(path)
-    console.log(account.address)
-    console.log(deadline)
+    //
+    // console.log(fromAmountToSend)
+    // console.log(toAmountToSend)
+    // console.log(path)
+    // console.log(account.address)
+    // console.log(deadline)
 
     exchangeContract.methods.swapExactTokensForTokens(fromAmountToSend, toAmountToSend, path, account.address, deadline).send({ from: account.address, gasPrice: web3.utils.toWei(store.getStore('universalGasPrice'), 'gwei') })
       .on('transactionHash', function(hash){

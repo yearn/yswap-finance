@@ -428,6 +428,9 @@ class Exchange extends Component {
   };
 
   setAmount = (id, type, balance) => {
+    if(type === 'to') {
+      return false
+    }
     const bal = (Math.floor((balance === '' ? '0' : balance)*10000)/10000).toFixed(4)
     let val = []
     val[type+"Amount"] = bal
