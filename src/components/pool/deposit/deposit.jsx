@@ -102,6 +102,13 @@ const styles = theme => ({
     borderRadius: '0.75rem',
     marginBottom: '24px',
   },
+  disaclaimerV2: {
+    padding: '12px',
+    border: '1px solid rgb(174, 174, 174)',
+    borderRadius: '0.75rem',
+    marginBottom: '24px',
+    cursor: 'pointer'
+  },
   aUSDCard: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -297,6 +304,7 @@ class Deposit extends Component {
       <div className={ classes.root }>
         <div className={ classes.card }>
           <Typography variant={'h5'} className={ classes.disaclaimer }>This project is in beta. Use at your own risk.</Typography>
+          <Typography variant={'h5'} className={ classes.disaclaimerV2 } onClick={()=> window.open("https://v1.yswap.exchange", "_blank")}>If you don't see your liquidity, go to v1.yswap.exchange.</Typography>
           <div className={ classes.intro }>
             <Card className={ classes.addressContainer } onClick={this.overlayClicked}>
               <Typography variant={ 'h3'} className={ classes.walletTitle } noWrap>Wallet</Typography>
